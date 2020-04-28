@@ -3,7 +3,7 @@
 import HttpSwift
 import SocketSwift
 
-class UITestKit {
+open class UITestKit {
     
     private let server: Server
     
