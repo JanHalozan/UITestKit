@@ -27,7 +27,7 @@ open class UITestKit {
     
     func handleRequest(req: Request, next: RouteHandler) throws -> Response {
         do {
-            let content = try self.responseLoader.response(forRequestPath: req.path)
+            let content = try self.responseLoader.response(forMethod: req.method, requestPath: req.path, queryParameters: req.queryParams)
             return .ok(content, headers: ["Content-Type": "application/json"])
         } catch {
             throw error
