@@ -2,9 +2,12 @@ import XCTest
 import Foundation
 @testable import UITestKit
 
+//Path not working yet. See https://stackoverflow.com/questions/47177036/use-resources-in-unit-tests-with-swift-package-manager
+static let MainFixturesDirectory = "../Fixtures"
+
 final class UITestKitTests: XCTestCase {
     
-    let kit = UITestKit(port: 4321, fixtureDirectory: "../Fixtures") //Path not working yet. See https://stackoverflow.com/questions/47177036/use-resources-in-unit-tests-with-swift-package-manager
+    let kit = UITestKit(port: 4321, fixtureDirectory: MainFixturesDirectory)
     
     static var allTests = [
         ("testListen", testListen),

@@ -8,22 +8,27 @@
 import Foundation
 
 public enum ResponseLoaderError: Error {
-    case fixtureNotFound
+    case fixtureNotFound, scenarioNotFound
     
     public var localizedDescription: String {
         switch self {
         case .fixtureNotFound: return "Fixture not found."
+        case .scenarioNotFound: return "Scenario folder not found."
         }
     }
 }
 
 public protocol ResponseLoader {
+    var scenario: String? { get set }
+    
     func response(forMethod: String, requestPath path: String, queryParameters: [String: String]) throws -> String
 }
 
 open class DefaultResponseLoader: ResponseLoader {
     
     public let fixtureDirectory: String
+    
+    public var scenario: String?
     
     public init(fixtureDirectory dir: String) {
         self.fixtureDirectory = dir
@@ -35,27 +40,39 @@ open class DefaultResponseLoader: ResponseLoader {
             })
             .sorted()
             .joined(separator: "&")
-
-        if let content = self.readFile(query: query, method: method, path: "\(self.fixtureDirectory)\(path)") {
-            return content
-        }
         
-        let components = path.split(separator: "/").map({ return String($0) })
-        var fullPath = self.fixtureDirectory
-        for component in components {
-            if self.folderExists(atPath: fullPath, folderName: component) {
-                fullPath += "/\(component)"
-            } else if self.folderExists(atPath: fullPath, folderName: "*") {
-                fullPath += "/*"
-            } else {
-                throw ResponseLoaderError.fixtureNotFound
+        if let scenario = self.scenario {
+            if !self.folderExists(atPath: "\(self.fixtureDirectory)", folderName: scenario) {
+                throw ResponseLoaderError.scenarioNotFound
+            }
+            
+            let lastComponent = path.components(separatedBy: "/").last ?? "default"
+            let file = "\(self.fixtureDirectory)\(scenario)/\(lastComponent).json"
+            if let str = try? String(contentsOfFile: file) {
+                return str
+            }
+        } else {
+            if let content = self.readFile(query: query, method: method, path: "\(self.fixtureDirectory)\(path)") {
+                return content
+            }
+            
+            let components = path.split(separator: "/").map({ return String($0) })
+            var fullPath = self.fixtureDirectory
+            for component in components {
+                if self.folderExists(atPath: fullPath, folderName: component) {
+                    fullPath += "/\(component)"
+                } else if self.folderExists(atPath: fullPath, folderName: "*") {
+                    fullPath += "/*"
+                } else {
+                    throw ResponseLoaderError.fixtureNotFound
+                }
+            }
+            
+            if let content = self.readFile(query: query, method: method, path: fullPath) {
+                return content
             }
         }
-        
-        if let content = self.readFile(query: query, method: method, path: fullPath) {
-            return content
-        }
-        
+
         throw ResponseLoaderError.fixtureNotFound
     }
     
@@ -68,19 +85,20 @@ open class DefaultResponseLoader: ResponseLoader {
         return contents.contains(folder)
     }
     
-    private func readFile(query: String, method: String, path: String) -> String? {
+    private func readFile(query: String, method: String, path: String, statusCode: Int = 200) -> String? {
         let filename = query.count > 0 ? "\(method.uppercased())_\(query).json" : "\(method.uppercased()).json"
-        var file = "\(path)/200/\(filename)"
+        let statusFolder = "/\(statusCode)/"
+        var file = "\(path)\(statusFolder)\(filename)"
         if let str = try? String(contentsOfFile: file) { //First try the longest filename
             return str
         }
         
-        file = "\(path)/200/\(method)_default.json" //Then try the default for that method
+        file = "\(path)\(statusFolder)\(method)_default.json" //Then try the default for that method
         if let str = try? String(contentsOfFile: file) {
             return str
         }
         
-        file = "\(path)/200/default.json" //Then try the default for that path
+        file = "\(path)\(statusFolder)default.json" //Then try the default for that path
         if let str = try? String(contentsOfFile: file) {
             return str
         }

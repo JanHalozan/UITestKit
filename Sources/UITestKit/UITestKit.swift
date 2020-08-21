@@ -25,6 +25,14 @@ open class UITestKit {
         }
     }
     
+    open func loadScenario(_ scenario: String) {
+        self.responseLoader.scenario = scenario
+    }
+    
+    open func resetScenario() {
+        self.responseLoader.scenario = nil
+    }
+    
     func handleRequest(req: Request, next: RouteHandler) throws -> Response {
         do {
             let content = try self.responseLoader.response(forMethod: req.method, requestPath: req.path, queryParameters: req.queryParams)
