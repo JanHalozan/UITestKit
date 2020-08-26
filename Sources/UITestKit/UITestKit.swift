@@ -21,8 +21,12 @@ open class UITestKit {
     
     open func listen() throws {
         do {
-            try server.run(port: self.port)
+            try self.server.run(port: self.port)
         }
+    }
+    
+    open func stop() {
+        self.server.stop()
     }
     
     open func loadScenario(_ scenario: String) {

@@ -25,4 +25,17 @@ final class ScenarioTests: XCTestCase {
         
         wait(for: [expectation], timeout: 10)
     }
+    
+    func testSubscenario() {
+        self.kit.loadScenario("DummyScenario/Subscenario")
+        
+        let url = URL(string: "http://localhost:4321")!
+        let expectation = XCTestExpectation(description: "Expect the request to succeed")
+        URLSession.shared.dataTask(with: url, completionHandler: { (data, response, error) in
+            XCTAssert((response as? HTTPURLResponse)?.statusCode == 200, "Should succeed with 200")
+            expectation.fulfill()
+        }).resume()
+        
+        wait(for: [expectation], timeout: 10)
+    }
 }

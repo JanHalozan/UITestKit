@@ -42,12 +42,24 @@ open class DefaultResponseLoader: ResponseLoader {
             .joined(separator: "&")
         
         if let scenario = self.scenario {
-            if !self.folderExists(atPath: "\(self.fixtureDirectory)", folderName: scenario) {
+            let folder: String
+            let folderPath: String
+            if let index = scenario.lastIndex(of: "/") {
+                folder = String(scenario[scenario.index(after: index) ..< scenario.endIndex])
+                folderPath = "\(self.fixtureDirectory)/\(scenario[scenario.startIndex ..< index])"
+            } else {
+                folder = scenario
+                folderPath = self.fixtureDirectory
+            }
+            if !self.folderExists(atPath: folderPath, folderName: folder) {
                 throw ResponseLoaderError.scenarioNotFound
             }
             
-            let lastComponent = path.components(separatedBy: "/").last ?? "default"
-            let file = "\(self.fixtureDirectory)\(scenario)/\(lastComponent).json"
+            var lastComponent = path.components(separatedBy: "/").last
+            if lastComponent?.isEmpty ?? true {
+                 lastComponent = "default"
+            }
+            let file = "\(folderPath)/\(folder)/\(lastComponent!).json"
             if let str = try? String(contentsOfFile: file) {
                 return str
             }
