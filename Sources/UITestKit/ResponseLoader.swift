@@ -55,13 +55,8 @@ open class DefaultResponseLoader: ResponseLoader {
                 throw ResponseLoaderError.scenarioNotFound
             }
             
-            var lastComponent = path.components(separatedBy: "/").last
-            if lastComponent?.isEmpty ?? true {
-                 lastComponent = "default"
-            }
-            let file = "\(folderPath)/\(folder)/\(lastComponent!).json"
-            if let str = try? String(contentsOfFile: file) {
-                return str
+            if let content = self.readScenarioFile(path: path, query: query, method: method, folderPath: "\(folderPath)/\(folder)") {
+                return content
             }
         } else {
             if let content = self.readFile(query: query, method: method, path: "\(self.fixtureDirectory)\(path)") {
@@ -97,9 +92,37 @@ open class DefaultResponseLoader: ResponseLoader {
         return contents.contains(folder)
     }
     
+    private func readScenarioFile(path: String, query: String, method: String, folderPath: String, statusCode: Int = 200) -> String? {
+        var filename = method.uppercased()// query.count > 0 ? "\(method.uppercased())_\(query).json" : "\(method.uppercased()).json"
+        if query.count > 0 {
+            filename += "_\(query)"
+        }
+        if let endpoint = path.components(separatedBy: "/").last, endpoint.count > 0 {
+            filename += "_\(endpoint)"
+        }
+        filename += ".json"
+        let statusFolder = "/"//statusCode == 200 ? "/" : "/\(statusCode)/"
+        var file = "\(folderPath)\(statusFolder)\(filename)"
+        if let str = try? String(contentsOfFile: file) { //First try the longest filename
+            return str
+        }
+
+        if let endpoint = path.components(separatedBy: "/").last, endpoint.count > 0 {
+            filename = "\(endpoint).json"
+        } else {
+            filename = "default.json"
+        }
+        file = "\(folderPath)\(statusFolder)\(filename)" //Then try the default for that method
+        if let str = try? String(contentsOfFile: file) {
+            return str
+        }
+
+        return nil
+    }
+    
     private func readFile(query: String, method: String, path: String, statusCode: Int = 200) -> String? {
         let filename = query.count > 0 ? "\(method.uppercased())_\(query).json" : "\(method.uppercased()).json"
-        let statusFolder = "/\(statusCode)/"
+        let statusFolder = "/\(statusCode)/"//statusCode == 200 ? "/" : "/\(statusCode)/"
         var file = "\(path)\(statusFolder)\(filename)"
         if let str = try? String(contentsOfFile: file) { //First try the longest filename
             return str

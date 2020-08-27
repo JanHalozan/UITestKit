@@ -7,7 +7,9 @@ static let MainFixturesDirectory = "../Fixtures"
 
 final class UITestKitTests: XCTestCase {
     
-    let kit = UITestKit(port: 4321, fixtureDirectory: MainFixturesDirectory)
+    struct Box {
+        static var kit = UITestKit(port: 4321, fixtureDirectory: MainFixturesDirectory)
+    }
     
     static var allTests = [
         ("testListen", testListen),
@@ -15,8 +17,8 @@ final class UITestKitTests: XCTestCase {
         ("testExistentEndpoint", testExistentEndpoint)
     ]
     
-    override func setUp() {
-        try! self.kit.listen()
+    override class func setUp() {
+        try! Box.kit.listen()
     }
     
     func testListen() throws {
@@ -56,7 +58,7 @@ final class UITestKitTests: XCTestCase {
     
     func testExistentEndpoint() {
         let url = URL(string: "http://localhost:4321")!
-        var expectation = XCTestExpectation(description: "Expect the request to succeed")
+        let expectation = XCTestExpectation(description: "Expect the request to succeed")
         URLSession.shared.dataTask(with: url, completionHandler: { (data, response, error) in
             XCTAssert((response as? HTTPURLResponse)?.statusCode == 200, "Should succeed with 200")
             expectation.fulfill()
@@ -65,9 +67,9 @@ final class UITestKitTests: XCTestCase {
         wait(for: [expectation], timeout: 10)
     }
     
-    func testKeepRunningFor10Minutes() {
-        //This test is used for having the server running
-        let expectation = XCTestExpectation(description: "Testing")
-        wait(for: [expectation], timeout: 600)
-    }
+//    func testKeepRunningFor10Minutes() {
+//        //This test is used for having the server running
+//        let expectation = XCTestExpectation(description: "Testing")
+//        wait(for: [expectation], timeout: 600)
+//    }
 }

@@ -3,18 +3,21 @@ import Foundation
 @testable import UITestKit
 
 final class ScenarioTests: XCTestCase {
-    let kit = UITestKit(port: 4321, fixtureDirectory: MainFixturesDirectory)
+    
+    struct Box {
+        static var kit = UITestKit(port: 4321, fixtureDirectory: MainFixturesDirectory)
+    }
     
     static var allTests = [
         ("testScenario", testScenario)
     ]
     
-    override func setUp() {
-        try! self.kit.listen()
+    override class func setUp() {
+        try! Box.kit.listen()
     }
     
     func testScenario() {
-        self.kit.loadScenario("DummyScenario")
+        Box.kit.loadScenario("DummyScenario")
         
         let url = URL(string: "http://localhost:4321/partial/endpoint")!
         let expectation = XCTestExpectation(description: "Expect the request to succeed")
@@ -27,7 +30,7 @@ final class ScenarioTests: XCTestCase {
     }
     
     func testSubscenario() {
-        self.kit.loadScenario("DummyScenario/Subscenario")
+        Box.kit.loadScenario("DummyScenario/Subscenario")
         
         let url = URL(string: "http://localhost:4321")!
         let expectation = XCTestExpectation(description: "Expect the request to succeed")
